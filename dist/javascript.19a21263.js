@@ -428,18 +428,18 @@ var Swiper = function Swiper(node) {
       if (newX - initX > 50) {
         eventHub['swipRight'].forEach(function (fn) {
           return fn.bind(root)();
-        });
+        }); //依次执行对应swipLeft或swipRight中的函数
       } else if (initX - newX > 50) {
         eventHub['swipLeft'].forEach(function (fn) {
           return fn.bind(root)();
-        });
+        }); //里面的this就是bind里面的参数
       }
     }, 100);
   };
 
   this.on = function (type, fn) {
     if (eventHub[type]) {
-      eventHub[type].push(fn);
+      eventHub[type].push(fn); //将对应滑动的函数给上传到对应eventHub的滑动函数当中
     }
   };
 
@@ -504,9 +504,10 @@ function () {
     };
 
     this.songList = [];
-    this.currentIndex = 0;
+    this.currentIndex = 0; //用于计算上一曲，下一曲的循环
+
     this.audio = new Audio();
-    this.lyricArr = [];
+    this.lyricsArr = [];
     this.lyricIndex = -1;
     this.start();
     this.bind();
@@ -629,26 +630,33 @@ function () {
         return res.json();
       }).then(function (data) {
         //console.log(data.lrc.lyric)
-        _this5.setLyrics(data.lrc.lyric);
+        _this5.setLyrics(data.lrc.lyric); //console.log(this.lyricsArr)
+
 
         window.lyrics = data.lrc.lyric;
       });
-    }
+    } //定位歌词
+
   }, {
     key: "locateLyric",
     value: function locateLyric() {
       console.log('locateLyric');
-      var currentTime = this.audio.currentTime * 1000;
-      var nextLineTime = this.lyricsArr[this.lyricIndex + 1][0];
+      var currentTime = this.audio.currentTime * 1000; //播放时间变成毫秒数，像368
+
+      var nextLineTime = this.lyricsArr[this.lyricIndex + 1][0]; //当前数组[['123','歌词'],['234','歌词'],['456','歌词']]
+      //如果当前时间大于数组歌词的时间且吧歌词不是最后一句，展示歌词。
 
       if (currentTime > nextLineTime && this.lyricIndex < this.lyricsArr.length - 1) {
         this.lyricIndex++;
-        var node = this.$('[data-time="' + this.lyricsArr[this.lyricIndex][0] + '"]');
-        if (node) this.setLineToCenter(node);
+        var node = this.$('[data-time="' + this.lyricsArr[this.lyricIndex][0] + '"]'); //找出对应时间的歌词
+
+        if (node) this.setLineToCenter(node); //让歌词展示到中间
+
         this.$$('.panel-effect .lyric p')[0].innerText = this.lyricsArr[this.lyricIndex][1];
         this.$$('.panel-effect .lyric p')[1].innerText = this.lyricsArr[this.lyricIndex + 1] ? this.lyricsArr[this.lyricIndex + 1][1] : '';
       }
-    }
+    } //歌词的处理原始歌词为（[00:19.33]着迷于你眼睛 银河有迹可循）
+
   }, {
     key: "setLyrics",
     value: function setLyrics(lyrics) {
@@ -663,9 +671,10 @@ function () {
         line.match(/\[.+?\]/g).forEach(function (t) {
           t = t.replace(/[\[\]]/g, '');
           var milliseconds = parseInt(t.slice(0, 2)) * 60 * 1000 + parseInt(t.slice(3, 5)) * 1000 + parseInt(t.slice(6));
-          lyricsArr.push([milliseconds, str]);
+          lyricsArr.push([milliseconds, str]); //['毫秒数', '歌词']
         });
-      });
+      }); //把歌词按时间大小排序
+
       lyricsArr.filter(function (line) {
         return line[1].trim() !== '';
       }).sort(function (v1, v2) {
@@ -678,7 +687,7 @@ function () {
         var node = document.createElement('p');
         node.setAttribute('data-time', line[0]);
         node.innerText = line[1];
-        fragment.appendChild(node);
+        fragment.appendChild(node); //处理后格式<p data-time="1031">监制：郭顶</p>
       });
       this.$('.panel-lyrics .container').innerHTML = '';
       this.$('.panel-lyrics .container').appendChild(fragment);
@@ -687,7 +696,9 @@ function () {
   }, {
     key: "setLineToCenter",
     value: function setLineToCenter(node) {
-      var translateY = node.offsetTop - this.$('.panel-lyrics').offsetHeight / 2;
+      //每个歌词要偏移的高度 = 歌词到最顶的高度 - 歌词容器一半的高度
+      var translateY = node.offsetTop - this.$('.panel-lyrics').offsetHeight / 2; //前面的歌词不需要滚动
+
       translateY = translateY > 0 ? translateY : 0;
       this.$('.panel-lyrics .container').style.transform = "translateY(-".concat(translateY, "px)");
       this.$$('.panel-lyrics p').forEach(function (node) {
@@ -698,12 +709,11 @@ function () {
   }, {
     key: "setProgressBar",
     value: function setProgressBar() {
-      console.log('set setProgerssBar');
-      var percent = this.audio.currentTime * 100 / this.audio.duration + '%';
-      console.log(percent);
+      // console.log('set setProgerssBar')
+      var percent = this.audio.currentTime * 100 / this.audio.duration + '%'; // console.log(percent)
+
       this.$('.bar .progress').style.width = percent;
-      this.$('.time-start').innerText = this.formateTime(this.audio.currentTime);
-      console.log(this.$('.bar .progress').style.width);
+      this.$('.time-start').innerText = this.formateTime(this.audio.currentTime); // console.log(this.$('.bar .progress').style.width)
     }
   }, {
     key: "formateTime",
@@ -748,7 +758,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50918" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57126" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

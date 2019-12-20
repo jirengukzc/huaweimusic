@@ -74,16 +74,16 @@ class Swiper {
       clock = setTimeout(()=>{
         newX = e.changedTouches[0].pageX
         if(newX - initX > 50) {
-          eventHub['swipRight'].forEach(fn=>fn.bind(root)())
+          eventHub['swipRight'].forEach(fn=>fn.bind(root)())  //依次执行对应swipLeft或swipRight中的函数
         }else if(initX - newX > 50) {
-          eventHub['swipLeft'].forEach(fn=>fn.bind(root)())
+          eventHub['swipLeft'].forEach(fn=>fn.bind(root)())  //里面的this就是bind里面的参数
         }
       }, 100)
     }
 
     this.on = function(type, fn) {
       if(eventHub[type]) {
-        eventHub[type].push(fn)
+        eventHub[type].push(fn) //将对应滑动的函数给上传到对应eventHub的滑动函数当中
       }
     }
     this.off = function(type, fn) {

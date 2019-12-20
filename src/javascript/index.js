@@ -9,9 +9,9 @@ class Player {
         this.$ = selector => this.root.querySelector(selector)
         this.$$ = selector => this.root.querySelectorAll(selector)
         this.songList = []
-        this.currentIndex = 0
+        this.currentIndex = 0     //用于计算上一曲，下一曲的循环
         this.audio = new Audio()
-        this.lyricArr = []
+        this.lyricsArr = []
         this.lyricIndex = -1
 
         this.start()
@@ -48,7 +48,7 @@ class Player {
             self.currentIndex = (self.songList.length + self.currentIndex - 1) % self.songList.length
             self.loadSong()
             self.playSong()
-            if(self.$('.btn-play-pause').classList.contains('pause')) {
+            if (self.$('.btn-play-pause').classList.contains('pause')) {
                 self.$('.btn-play-pause').classList.remove('pause')
                 self.$('.btn-play-pause').classList.add('playing')
                 self.$('.btn-play-pause').querySelector('use').setAttribute('xlink:href', '#icon-pause')
@@ -58,7 +58,7 @@ class Player {
             self.currentIndex = (self.currentIndex + 1) % self.songList.length
             self.loadSong()
             self.playSong()
-            if(self.$('.btn-play-pause').classList.contains('pause')) {
+            if (self.$('.btn-play-pause').classList.contains('pause')) {
                 self.$('.btn-play-pause').classList.remove('pause')
                 self.$('.btn-play-pause').classList.add('playing')
                 self.$('.btn-play-pause').querySelector('use').setAttribute('xlink:href', '#icon-pause')
@@ -69,7 +69,7 @@ class Player {
             //console.log(parseInt(self.audio.currentTime*1000))
             self.locateLyric() //定位歌词
             self.setProgressBar()
-            
+
         }
         //页面切换
         let swiper = new Swiper(this.$('.panels'))
@@ -91,16 +91,15 @@ class Player {
         this.$('.header p').innerText = songObj.author + '-' + songObj.albumn
         this.audio.src = songObj.url
         this.audio.onloadedmetadata = () => this.$('.time-end').innerText = this.formateTime(this.audio.duration)
-        
+
         //在音乐加载的时候获取(this.audio.duration)的总时长，用formateTime的方法转换成需要的格式
         this.loadLyrics()
-
     }
 
     playSong() {
         this.audio.oncanplaythrough = () => this.audio.play()
     }
-   
+
     //加载歌词
     loadLyrics() {
         fetch(this.songList[this.currentIndex].lyric)
@@ -108,24 +107,25 @@ class Player {
             .then(data => {
                 //console.log(data.lrc.lyric)
                 this.setLyrics(data.lrc.lyric)
+                //console.log(this.lyricsArr)
                 window.lyrics = data.lrc.lyric
             })
     }
-
+    //定位歌词
     locateLyric() {
         console.log('locateLyric')
-    let currentTime = this.audio.currentTime*1000
-    let nextLineTime = this.lyricsArr[this.lyricIndex+1][0]
-    if(currentTime > nextLineTime && this.lyricIndex < this.lyricsArr.length - 1) {
-      this.lyricIndex++
-      let node = this.$('[data-time="'+this.lyricsArr[this.lyricIndex][0]+'"]')
-            if(node) this.setLineToCenter(node)
+        let currentTime = this.audio.currentTime * 1000  //播放时间变成毫秒数，像368
+        let nextLineTime = this.lyricsArr[this.lyricIndex + 1][0]  //当前数组[['123','歌词'],['234','歌词'],['456','歌词']]
+        //如果当前时间大于数组歌词的时间且吧歌词不是最后一句，展示歌词。
+        if (currentTime > nextLineTime && this.lyricIndex < this.lyricsArr.length - 1) {
+            this.lyricIndex++
+            let node = this.$('[data-time="' + this.lyricsArr[this.lyricIndex][0] + '"]') //找出对应时间的歌词
+            if (node) this.setLineToCenter(node)  //让歌词展示到中间
             this.$$('.panel-effect .lyric p')[0].innerText = this.lyricsArr[this.lyricIndex][1]
-            this.$$('.panel-effect .lyric p')[1].innerText = this.lyricsArr[this.lyricIndex+1] ? this.lyricsArr[this.lyricIndex+1][1] : ''
+            this.$$('.panel-effect .lyric p')[1].innerText = this.lyricsArr[this.lyricIndex + 1] ? this.lyricsArr[this.lyricIndex + 1][1] : ''
         }
-
     }
-
+    //歌词的处理原始歌词为（[00:19.33]着迷于你眼睛 银河有迹可循）
     setLyrics(lyrics) {
         this.lyricIndex = 0
         let fragment = document.createDocumentFragment()
@@ -138,10 +138,10 @@ class Player {
                 line.match(/\[.+?\]/g).forEach(t => {
                     t = t.replace(/[\[\]]/g, '')
                     let milliseconds = parseInt(t.slice(0, 2)) * 60 * 1000 + parseInt(t.slice(3, 5)) * 1000 + parseInt(t.slice(6))
-                    lyricsArr.push([milliseconds, str])
+                    lyricsArr.push([milliseconds, str]) //['毫秒数', '歌词']
                 })
             })
-
+        //把歌词按时间大小排序
         lyricsArr.filter(line => line[1].trim() !== '').sort((v1, v2) => {
             if (v1[0] > v2[0]) {
                 return 1
@@ -152,14 +152,16 @@ class Player {
             let node = document.createElement('p')
             node.setAttribute('data-time', line[0])
             node.innerText = line[1]
-            fragment.appendChild(node)
+            fragment.appendChild(node)  //处理后格式<p data-time="1031">监制：郭顶</p>
         })
         this.$('.panel-lyrics .container').innerHTML = ''
-        this.$('.panel-lyrics .container').appendChild(fragment)
+        this.$('.panel-lyrics .container').appendChild(fragment) 
     }
     //播放时歌词处于中间
     setLineToCenter(node) {
+        //每个歌词要偏移的高度 = 歌词到最顶的高度 - 歌词容器一半的高度
         let translateY = node.offsetTop - this.$('.panel-lyrics').offsetHeight / 2
+        //前面的歌词不需要滚动
         translateY = translateY > 0 ? translateY : 0
         this.$('.panel-lyrics .container').style.transform = `translateY(-${translateY}px)`
         this.$$('.panel-lyrics p').forEach(node => node.classList.remove('current'))
@@ -167,12 +169,12 @@ class Player {
     }
 
     setProgressBar() {
-        console.log('set setProgerssBar')
-        let percent = (this.audio.currentTime * 100/this.audio.duration) + '%'
-        console.log(percent)
+       // console.log('set setProgerssBar')
+        let percent = (this.audio.currentTime * 100 / this.audio.duration) + '%'
+       // console.log(percent)
         this.$('.bar .progress').style.width = percent
         this.$('.time-start').innerText = this.formateTime(this.audio.currentTime)
-        console.log(this.$('.bar .progress').style.width)
+       // console.log(this.$('.bar .progress').style.width)
     }
 
     formateTime(secondsTotal) {
