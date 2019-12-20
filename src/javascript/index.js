@@ -11,7 +11,7 @@ class Player {
         this.songList = []
         this.currentIndex = 0
         this.audio = new Audio()
-        this.lyricArr = []
+        this.lyricsArr = []
         this.lyricIndex = -1
 
         this.start()
